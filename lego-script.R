@@ -17,9 +17,8 @@ library(tidyverse)
 library(ggplot2)
 
 # Plot the number of parts by year, colored by theme.  Colors not showing...  However, it looks like the number of parts across sets is growing over time.  Would be interesting to plot this against mean, because it's possible given the size of this data set, the increaseing slope we see might just be outliers.
-ggplot(sets, aes(year, num_parts, colors = theme_id)) +
+ggplot(sets, aes(x=year, y=num_parts, color = year)) +
       geom_point()
-# CALCULATE MEAN AND PLOT LINE [IF TIME PERMITS]
 
 # Viewing data frams or schema shows several label the primary key/ID of each data frame as merely "id". Rename these columns to perform joins.
 # library("dplyr")
@@ -74,15 +73,20 @@ View(master_join)
 parent_id_table <- subset(master_join, select = c("parent_id", "theme_id", "theme_name","year", "color_id"))
 
 # Perform some plots to visualize.  First, one that looks at number of parts over time:
-ggplot(master_join, aes(year, num_parts))  +
+ggplot(master_join, aes(year, inven_parts_quantity))  +
          geom_point()
 
+# Plot mean for the number of parts by year.  "11" below in the function refers to the column in the master join column that contains the country of parts.
+mean_num_parts <- aggregate(master_join[, 11], list(master_join$year), mean)
+ggplot(mean_num_parts, aes(Group.1, x)) +
+  geom_point()
+
 # Next, plot the themes (via its id) against number of parts.  It seems like there might be a semi-regular cadence where there are spikes in the number of parts, but hard to tell if there's anything meaningful here.
-ggplot(master_join, aes(theme_id, num_parts)) +
+ggplot(master_join, aes(theme_id, inven_parts_quantity)) +
          geom_point()
 
 #Then, plot the inventories (via id) against number of parts. There is no clear pattern emerging.
-ggplot(master_join, aes(inventory_id, num_parts)) +
+ggplot(master_join, aes(inventory_id, inven_parts_quantity)) +
         geom_point()
 
 # How many parent IDs are in the themes set?  Use plyr library to count, and then assign the results as a data frame to visualize.
@@ -91,21 +95,21 @@ visual_parent_id <- count(themes, "parent_id")
 plot(visual_parent_id)
 
 # Aggregate by subgroup and plot.  This is asking for a sum of the number of parts for each theme ID beneath a parent ID.  There is nothing really jumping out here; might be interesting to see which theme had the greatest number of parts.
-num_parts_by_theme <- aggregate(num_parts ~ parent_id + theme_id, data = parent_id_table, sum)
-ggplot(num_parts_by_theme, aes(theme_id, num_parts, colors = parent_id)) +
+num_parts_by_theme <- aggregate(inven_parts_quantity ~ parent_id + theme_id, data = master_join, sum)
+ggplot(num_parts_by_theme, aes(theme_id, inven_parts_quantity, colors = parent_id)) +
     geom_point()
 
 # What is the maximum number of parts?  Next question is, what is the theme?
-max(num_parts_by_theme$num_parts)
-# 10829494
-subset(num_parts_by_theme, num_parts == max(num_parts_by_theme$num_parts))
-# parent_id theme_id num_parts
-# 156       171      174  10829494
-subset(themes, themes$theme_id == 174)
+max(num_parts_by_theme$inven_parts_quantity)
+# 69085
+subset(num_parts_by_theme, inven_parts_quantity == max(num_parts_by_theme$inven_parts_quantity))
+# parent_id theme_id inven_parts_quantity
+#    22       37                69085
+subset(themes, themes$theme_id == 37)
 # A tibble: 1 x 3
-# parent_id theme_id              theme_name
-# <int>    <int>                   <chr>
-#  1       171      174 Star Wars Episode 4/5/6
+# parent_id theme_id theme_name
+# <int>    <int>      <chr>
+#   22       37  Basic Set
 
 
 # This removes subtotaling by theme ID.
@@ -130,3 +134,6 @@ subset(visual_colors, freq == max(visual_colors$freq))
 subset(visual_colors, freq == min(visual_colors$freq))
 #      color_name freq
 # 105 Trans Light Royal Blue    1
+
+
+# Isolate one part to show how frequently it shows up in other sets.
