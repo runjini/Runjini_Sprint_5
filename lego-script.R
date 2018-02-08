@@ -17,7 +17,7 @@ library(tidyverse)
 library(ggplot2)
 
 # Plot the number of parts by year, colored by theme.  Colors not showing...  However, it looks like the number of parts across sets is growing over time.  Would be interesting to plot this against mean, because it's possible given the size of this data set, the increaseing slope we see might just be outliers.
-ggplot(sets, aes(x=year, y=num_parts, color = year)) +
+ggplot(sets, aes(x=year, y=num_parts, color = theme_id)) +
       geom_point()
 
 # Viewing data frams or schema shows several label the primary key/ID of each data frame as merely "id". Rename these columns to perform joins.
@@ -96,7 +96,7 @@ plot(visual_parent_id)
 
 # Aggregate by subgroup and plot.  This is asking for a sum of the number of parts for each theme ID beneath a parent ID.  There is nothing really jumping out here; might be interesting to see which theme had the greatest number of parts.
 num_parts_by_theme <- aggregate(inven_parts_quantity ~ parent_id + theme_id, data = master_join, sum)
-ggplot(num_parts_by_theme, aes(theme_id, inven_parts_quantity, colors = parent_id)) +
+ggplot(num_parts_by_theme, aes(theme_id, inven_parts_quantity, color = parent_id)) +
     geom_point()
 
 # What is the maximum number of parts?  Next question is, what is the theme?
